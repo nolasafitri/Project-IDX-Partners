@@ -1,0 +1,143 @@
+import pandas as pd
+
+# Membaca data dari file CSV
+df = pd.read_csv("loan_data_2007_2014.csv")
+
+# Menampilkan beberapa baris pertama dari dataset
+print("Tampilan beberapa baris pertama dari dataset:")
+print(df.head())
+
+# Melakukan analisis statistik deskriptif
+print("\nStatistik Deskriptif untuk Atribut Numerik:")
+print(df.describe(include='all'))
+
+import matplotlib.pyplot as plt
+
+# Plot distribusi variabel target
+plt.figure(figsize=(8, 6))
+df['loan_status'].value_counts().plot(kind='bar', color='pink')
+plt.title('Distribusi Loan Status')
+plt.xlabel('Loan Status')
+plt.ylabel('Jumlah')
+plt.show()
+
+# Menampilkan frekuensi nilai pada variabel kategorikal
+categorical_vars = ['grade', 'sub_grade', 'term']
+for var in categorical_vars:
+    print(df[var].value_counts())
+
+# Plot distribusi variabel numerik
+numeric_vars = ['loan_amnt', 'int_rate', 'annual_inc']
+for var in numeric_vars:
+    plt.figure(figsize=(8, 6))
+    df[var].plot(kind='hist', bins=20, color='salmon', edgecolor='black')
+    plt.title(f'Distribusi {var}')
+    plt.xlabel(var)
+    plt.ylabel('Jumlah')
+    plt.show()
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Visualisasi histogram untuk variabel numerik
+plt.figure(figsize=(10, 6))
+sns.histplot(df['loan_amnt'], kde=True, bins=30, color='pink')
+plt.title("Distribusi Loan Amount")
+plt.xlabel("Loan Amount")
+plt.ylabel("Frekuensi")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+sns.histplot(df['int_rate'], kde=True, bins=30, color='skyblue')
+plt.title("Distribusi Interest Rate")
+plt.xlabel("Interest Rate")
+plt.ylabel("Frekuensi")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+sns.histplot(df['total_acc'], kde=True, bins=30, color='purple')
+plt.title("Distribusi Akun Kredit")
+plt.xlabel("Total Acc")
+plt.ylabel("Frekuensi")
+plt.show()
+
+# Visualisasi korelasi antar variabel numerik menggunakan heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(df[['loan_amnt', 'int_rate', 'annual_inc', 'dti', 'total_acc']].corr(), annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Korelasi Antar Variabel Numerik")
+plt.show()
+
+# Memeriksa nilai null dalam DataFrame
+missing_values = df.isnull().sum()
+
+# Mendapatkan nama-nama kolom dengan nilai null
+columns_with_null = missing_values[missing_values > 0].index
+
+# Menghapus kolom-kolom dengan nilai null dari DataFrame
+df_cleaned = df.drop(columns_with_null, axis=1)
+
+# Menampilkan DataFrame setelah penghapusan kolom
+print("DataFrame setelah penghapusan kolom dengan nilai null:")
+print(df_cleaned.head())
+
+from sklearn.preprocessing import StandardScaler
+
+# Inisialisasi objek StandardScaler
+scaler = StandardScaler()
+
+# Pisahkan fitur dan target
+X = df_cleaned[['loan_amnt', 'funded_amnt', 'term', 'int_rate', 'installment']]
+y = df_cleaned['grade']
+
+# Ambil hanya fitur-fitur numerik
+numeric_columns = X.select_dtypes(include=['float64', 'int64']).columns
+X_numeric = X[numeric_columns]
+
+# Latih penskalaan hanya pada data pelatihan
+scaler.fit(X_numeric)
+
+# Terapkan penskalaan pada data pelatihan dan data pengujian
+X_scaled = X.copy()  # Salin dataset
+X_scaled[numeric_columns] = scaler.transform(X_numeric)
+
+# Memeriksa Dataset
+df_cleaned
+
+from sklearn.model_selection import train_test_split
+
+# Bagi data menjadi set pelatihan dan pengujian
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+
+# Inisialisasi Model
+logistic_regression_model = LogisticRegression()
+
+# Pelatihan Model
+logistic_regression_model.fit(X_train, y_train)
+
+# Prediksi
+y_pred = logistic_regression_model.predict(X_test)
+
+from sklearn.ensemble import RandomForestClassifier
+
+# Inisialisasi model Random Forest Classifier
+random_forest_model = RandomForestClassifier()
+
+# Pelatihan model
+random_forest_model.fit(X_train, y_train)
+
+# Prediksi
+y_pred_rf = random_forest_model.predict(X_test)
+
+from sklearn.metrics import classification_report
+
+# Evaluasi Logistic Regression Model
+print("Logistic Regression:")
+print(classification_report(y_test, y_pred))
+
+# Evaluasi Random Forest Model
+print("Random Forest:")
+print(classification_report(y_test, y_pred_rf))
+
